@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Hadiah untuk kamu sayang</title>
+
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            background: #3b2818 url("brownn.jpg") no-repeat center center;
+            background-size: cover;
+            font-family: 'mungil', 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
+            text-align: center;
+            color: white;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- BACKGROUND BINTANG GIF --- */
+        .stars-container {
+            position: fixed;
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            pointer-events: none; 
+            z-index: 1; 
+        }
+        .star-gif {
+            position: absolute;
+            width: 120px; 
+            opacity: 0.7;
+        }
+
+        .slide {
+            display: none;
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            z-index: 2;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .active { display: flex; }
+
+        h1 { font-size: 50px; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); margin: 0; padding-top: 20px; }
+        h2 { font-size: 32px; }
+        p { font-size: 24px; }
+
+        button {
+            padding: 16px 28px;
+            margin: 12px;
+            font-size: 20px;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            background: #8b6b5c;
+            color: white;
+            transition: 0.3s;
+        }
+        button:hover { background: #6e5246; transform: scale(1.05); }
+
+        #gameArea {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 65vh;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        #rockruff {
+            width: 280px;
+            opacity: 0;
+            z-index: 2;
+            cursor: pointer;
+            transform: translateY(0);
+            position: relative;
+        }
+        #item {
+            width: 90px;
+            display: none;
+            cursor: pointer;
+            z-index: 5;
+            position: relative;
+            filter: drop-shadow(0 8px 6px rgba(0,0,0,0.4));
+        }
+        .throw { animation: throwBall 0.8s cubic-bezier(.3,1.5,.5,1) forwards; }
+        @keyframes throwBall {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-220px); }
+            100% { transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            0% { transform: translateX(-150%) translateY(0); opacity: 0; }
+            100% { transform: translateX(0) translateY(0); opacity: 1; }
+        }
+        .slide-in { animation: slideIn 0.8s ease forwards; }
+
+        #flash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; opacity: 0; pointer-events: none; z-index: 100;
+            transition: 0.2s;
+        }
+
+        .book-container {
+            perspective: 2000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2vh;
+        }
+        .book {
+            position: relative;
+            width: 800px;
+            height: 520px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        .book::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            width: 6px;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            z-index: 15;
+            transform: translateX(-50%);
+        }
+        .paper {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            top: 0;
+            right: 0;
+            transform-origin: left;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+            cursor: pointer;
+        }
+
+        /* INI BAGIAN YANG DIPERBAIKI (KUNCI HALAMAN AGAR TIDAK TURUN) */
+        .front, .back {
+            position: absolute !important; 
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            backface-visibility: hidden;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .front {
+            background-color: #FC8EAC;
+            border-radius: 0 15px 15px 0;
+            padding: 20px;
+        }
+        .back {
+            background-color: #eae5d3;
+            transform: rotateY(180deg);
+            border-radius: 15px 0 0 15px;
+            padding: 40px;
+            background-image: linear-gradient(#d1cfbd 1px, transparent 1px);
+            background-size: 100% 28px;
+            background-position: 0 35px;
+            box-shadow: inset -10px 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* --- CSS STIKER PNG BESAR --- */
+        .sticker {
+            position: absolute;
+            max-width: 140px; /* Ukuran stiker tetap besar */
+            z-index: 1; /* Di bawah teks */
+            pointer-events: none; 
+            filter: drop-shadow(3px 4px 6px rgba(0,0,0,0.3)); 
+        }
+
+        .page-text {
+            color: #555;
+            font-size: 20px;
+            line-height: 28px;
+            font-weight: bold;
+            text-align: center;
+            padding-top: 10px;
+            z-index: 2; /* Tulisan di atas stiker */
+            position: relative;
+        }
+        .photo-frame {
+            background: white;
+            padding: 12px;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            border-radius: 2px;
+            transform: rotate(1deg);
+        }
+        .page-img {
+            max-width: 300px;
+            max-height: 400px;
+            display: block;
+            object-fit: contain;
+        }
+        .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
+
+        .bookmark {
+            width: 25px;
+            height: 60px;
+            background: #eae5d3;
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            border-radius: 0 0 5px 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        #memories {
+            display: none;
+            height: 100vh;
+            overflow-y: auto !important; 
+            width: 100%;
+            padding-top: 10vh;
+            box-sizing: border-box;
+        }
+        #memories.active { display: block; }
+        
+        .gallery-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .clothesline-row {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px; 
+            margin-bottom: 60px;
+            position: relative;
+            flex-wrap: wrap;
+        }
+
+        .string-line {
+            position: absolute;
+            top: -15px;
+            left: 5%;
+            width: 90%;
+            height: 50px;
+            border-bottom: 3px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .polaroid {
+            background: white;
+            padding: 10px 10px 30px 10px;
+            box-shadow: 3px 5px 15px rgba(0,0,0,0.5);
+            position: relative;
+            z-index: 1;
+            width: 180px;
+            transform-origin: top center;
+            animation: swing 4s infinite ease-in-out;
+        }
+        
+        .polaroid img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+        }
+
+        .clip {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 30px;
+            background: #8b6b5c; 
+            border-radius: 4px;
+            z-index: 2;
+        }
+
+        @keyframes swing {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+
+        #videoSlide {
+            display: none;
+            height: 100vh;
+            overflow-y: auto !important;
+            width: 100%;
+            padding: 50px 20px;
+            box-sizing: border-box;
+        }
+        #videoSlide.active { display: block; }
+
+        .video-flex-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+
+        .video-wrapper {
+            max-width: 450px;
+            flex: 1 1 300px;
+            padding: 10px;
+        }
+
+        .video-wrapper video {
+            width: 100%;
+            border: 10px solid white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        #finalLoveSlide {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100%;
+        }
+        #finalLoveSlide.active { display: flex; }
+
+    </style>
+</head>
+<body>
+
+    <div class="stars-container">
+        <img src="staaarrss.gif" class="star-gif" style="top: 8%; left: 12%;">
+        <img src="staaarrss.gif" class="star-gif" style="top: 15%; right: 10%;">
+        <img src="staaarrss.gif" class="star-gif" style="bottom: 25%; left: 5%;">
+        <img src="staaarrss.gif" class="star-gif" style="bottom: 10%; right: 15%;">
+        <img src="staaarrss.gif" class="star-gif" style="top: 45%; left: 8%;">
+        <img src="staaarrss.gif" class="star-gif" style="top: 65%; right: 8%;">
+    </div>
+
+    <div id="flash"></div>
+
+    <div id="menu" class="slide active">
+        <img src="rockruff happy.gif" style="max-width:250px;"><br><br>
+        <h2>Rockruff wants to deliver a gift from someone you love!!!</h2>
+        <p>Do you want to open it??</p>
+        <button onclick="go('game')">YESYESYES PLEASEE I WANT IT</button>
+        <button onclick="go('no')">NNNNOOOOOOOOOO >:((</button>
+    </div>
+
+    <div id="no" class="slide">
+        <img src="rockruff-sad.gif" style="max-width:250px;"><br><br>
+        <h1>Pretty please open it, I'll give you another chance yaa</h1>
+        <button onclick="go('menu')">Try again!!</button>
+    </div>
+
+    <div id="game" class="slide">
+        <h1>Mini Game</h1>
+        <div id="gameArea">
+            <img id="rockruff">
+            <p id="gameText"></p>
+            <img id="item">
+        </div>
+        <button id="nextBtn" style="display:none;" onclick="go('postgame1')">Continue!!</button>
+    </div>
+
+    <div id="postgame1" class="slide">
+        <h2>Oh!! I see you already captured Rockruff my love :3</h2>
+        <img src="myaowl amaze.gif" style="max-width:250px;"><br>
+        <button onclick="go('postgame2')">Next</button>
+    </div>
+
+    <div id="postgame2" class="slide">
+        <h2>You did so well baby!!! >:3</h2>
+        <img src="headpats.gif" style="max-width:250px;"><br>
+        <button onclick="go('postgame3')">Next</button>
+    </div>
+
+    <div id="postgame3" class="slide">
+        <h2>Ready to open the gift?</h2>
+        <img src="loveyou.gif" style="max-width:250px;"><br>
+        <button onclick="go('book')">Yes please!!!</button>
+    </div>
+
+    <div id="book" class="slide">
+        <div class="book-container">
+            <div class="book">
+                <div class="bookmark"></div>
+                
+                <div class="paper" style="z-index: 6;">
+                    <div class="front">
+                        <h2 style="color:white; text-shadow: 1px 1px 5px rgba(0,0,0,0.2);">Happy 17th Birthday<br>My Dearest <33</h2>
+                    </div>
+                    <div class="back">
+                        <img src="silly.png" class="sticker" style="top: 10px; right: 10px; transform: rotate(15deg);">
+                        <div class="page-text">Happy birthday and sweet seventeenth to my precious pretty girl, kallita willy <33 </div>
+                    </div>
+                </div>
+
+                <div class="paper" style="z-index: 5;">
+                    <div class="front">
+                        <div class="photo-frame"><img src="mygirl.jpg" class="page-img"></div>
+                    </div>
+                    <div class="back">
+                        <img src="hatrockruff.png" class="sticker" style="bottom: 10px; left: 10px; transform: rotate(-10deg);">
+                        <div class="page-text">My wishes for you is I hope you'll be happier dari hari ke harinya dan sehat sehat selalu, dipanjangkan umurnya. <33</div>
+                    </div>
+                </div>
+
+                <div class="paper" style="z-index: 4;">
+                    <div class="front">
+                        <div class="photo-frame"><img src="MWAHMWAH.jpg" class="page-img"></div>
+                    </div>
+                    <div class="back">
+                        <img src="proud.png" class="sticker" style="bottom: 15px; right: 15px; transform: rotate(20deg);">
+                        <div class="page-text">Semoga semua mimpi kamu tercapai nanti dan hidup kamu sukses kedepannya.</div>
+                    </div>
+                </div>
+
+                <div class="paper" style="z-index: 3;">
+                    <div class="front">
+                        <div class="photo-frame"><img src="puppygf.jpg" class="page-img"></div>
+                    </div>
+                    <div class="back">
+                        <img src="bone.png" class="sticker" style="top: 15px; left: 15px; transform: rotate(-15deg);">
+                        <div class="page-text">Aku bangga banget sama kamu yang udah bertahan sampai di detik kamu berumur 17 ini. Kamu adalah wanita, sekaligus pacar aku yang kuat banget.</div>
+                    </div>
+                </div>
+
+                <div class="paper" style="z-index: 2;">
+                    <div class="front">
+                        <div class="photo-frame"><img src="LUCUNYAISTRIKU.jpg" class="page-img"></div>
+                    </div>
+                    <div class="back">
+                        <img src="us.png" class="sticker" style="bottom: 20px; right: 10px; transform: rotate(10deg);">
+                        <div class="page-text">You mean so much to me sayang and I wouldn’t trade what we have for anything. Let's keep moving forward together no matter how hard the situation is i will always choose you.</div>
+                    </div>
+                </div>
+
+                <div class="paper" style="z-index: 1;">
+                    <div class="front">
+                        <div class="photo-frame"><img src="myadorablewife.jpg" class="page-img"></div>
+                    </div>
+                    <div class="back">
+                        <img src="us2.png" class="sticker" style="bottom: 15px; left: 15px; transform: rotate(-8deg);">
+                        <div class="page-text">Sekali lagi selamat ulang tahun yang ke 17 sayang, much love from tasya.</div>
+                    </div>
+                </div>
+
+                <div class="paper" style="z-index: 0; cursor: default;">
+                    <div class="front">
+                        <div class="photo-frame"><img src="mywife.jpg" class="page-img"></div>
+                    </div>
+                    <div class="back" style="background: #FC8EAC; position: relative;">
+                        <div style="position: absolute; bottom: 30px; right: 30px; font-family: 'mungil', 'Comic Sans MS', cursive; font-size: 24px; color: rgba(255, 255, 255, 0.6); transform: rotate(-5deg);">dari pacar kamu tasya</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <p style="margin-top:20px; color:rgba(255,255,255,0.7); font-size:16px;">(Click the right side to flip)</p>
+        
+        <div style="height: 60px;">
+            <button id="toMemoriesBtn" style="display:none;" onclick="go('memories')">Next: Memories 📸</button>
+        </div>
+    </div>
+
+    <div id="memories" class="slide">
+        <h1>Memories</h1>
+        <p style="font-size: 20px; margin-top: 10px; margin-bottom: 10px;">These are the memories I will cherish forever <33</p>
+        
+        <div class="gallery-container">
+            
+            <div class="clothesline-row">
+                <div class="string-line"></div>
+                <div class="polaroid"><div class="clip"></div><img src="firstdate.jpg"></div>
+                <div class="polaroid"><div class="clip"></div><img src="cfdate.jpg"></div>
+                <div class="polaroid"><div class="clip"></div><img src="roblox.jpg"></div>
+            </div>
+
+            <div class="clothesline-row">
+                <div class="string-line"></div>
+                <div class="polaroid"><div class="clip"></div><img src="third date.jpg"></div>
+                <div class="polaroid"><div class="clip"></div><img src="herpettingcat.jpg"></div>
+                <div class="polaroid"><div class="clip"></div><img src="memories.jpg"></div>
+                <div class="polaroid"><div class="clip"></div><img src="partydate.jpg"></div>
+            </div>
+
+            <div class="clothesline-row">
+                <div class="string-line"></div>
+                <div class="polaroid"><div class="clip"></div><img src="nintendo date.jpg"></div>
+                <div class="polaroid"><div class="clip"></div><img src="nintendo date 2.jpg"></div>
+                <div class="polaroid"><div class="clip"></div><img src="her with cameraa.jpg"></div>
+            </div>
+
+        </div>
+        
+        <div style="padding-bottom: 40px;">
+            <button onclick="go('videoSlide')">Almost there!!</button>
+        </div>
+    </div>
+
+    <div id="videoSlide" class="slide">
+        <h2>these songs reminds me of you my love <33</h2>
+        
+        <div class="video-flex-container">
+            <div class="video-wrapper">
+                <video controls>
+                    <source src="lagu1.mp4" type="video/mp4">
+                </video>
+            </div>
+
+            <div class="video-wrapper">
+                <video controls>
+                    <source src="lagu2.mp4" type="video/mp4">
+                </video>
+            </div>
+        </div>
+
+        <div style="padding-top: 20px; padding-bottom: 50px;">
+            <button onclick="go('finalLoveSlide')">Next</button>
+        </div>
+    </div>
+
+    <div id="finalLoveSlide" class="slide">
+        <img src="muchlove.gif" style="max-width: 300px;">
+        <p style="font-size: 26px; margin-top: 20px; text-shadow: 2px 2px 8px rgba(0,0,0,0.5);">I hope you like it sayangg!!! &lt;333</p>
+        <div style="margin-top: 30px; padding-bottom: 40px;">
+            <button onclick="go('menu')">You can review this again my love &lt;3 </button>
+        </div>
+    </div>
+
+    <script>
+        function go(id){
+            document.querySelectorAll('.slide').forEach(e=>e.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(id==="game") startGame();
+            
+            if(id==="memories" || id==="videoSlide" || id==="finalLoveSlide") {
+                document.getElementById(id).scrollTop = 0;
+            }
+        }
+
+        let stage=0, clicks=0;
+        const rockruff=document.getElementById("rockruff");
+        const text=document.getElementById("gameText");
+        const item=document.getElementById("item");
+        const nextBtn=document.getElementById("nextBtn");
+        const flash=document.getElementById("flash");
+
+        function startGame(){
+            stage=0; clicks=0;
+            rockruff.style.opacity="0";
+            text.innerText="Loading...";
+            item.style.display="none";
+            nextBtn.style.display="none";
+
+            rockruff.src="erasebg-transformed (1).png";
+            rockruff.classList.add("slide-in");
+
+            setTimeout(()=>{
+                rockruff.style.opacity="1";
+                rockruff.src="rockruffsit.gif";
+                text.innerText="Oh rockruff appeared!! battle them!!";
+                item.src="pokeball-jukebox-bg-removed.png"; 
+                item.style.display="block";
+            },1200);
+        }
+
+        rockruff.onclick=function(){
+            if(stage===0){
+                throwItem();
+                clicks++;
+                flashFx();
+                if(clicks>=5){
+                    stage=1;
+                    clicks=0;
+                    rockruff.src="rockruff down.gif";
+                    text.innerText="Rockruff is down!! catch it!!";
+                }
+            }
+            else if(stage===1){
+                throwItem();
+                flashFx();
+                setTimeout(()=>{
+                    rockruff.src="rockruffcatch.gif";
+                    text.innerText="You caught rockruff!!";
+                    item.style.display="none";
+                    nextBtn.style.display="inline-block";
+                },500);
+                stage=2;
+            }
+        };
+
+        function throwItem(){
+            item.classList.remove("throw");
+            void item.offsetWidth;
+            item.classList.add("throw");
+        }
+
+        function flashFx(){
+            flash.style.opacity="0.8";
+            setTimeout(()=>flash.style.opacity="0",150);
+        }
+
+        const papers = document.querySelectorAll(".paper");
+        let currentLoc = 1;
+
+        papers.forEach((paper, index) => {
+            if (index === papers.length - 1) return;
+
+            paper.addEventListener("click", () => {
+                if(index + 1 === currentLoc) { 
+                    paper.classList.add("flipped");
+                    paper.style.zIndex = index + 1;
+                    currentLoc++;
+                    
+                    if (currentLoc === papers.length) {
+                        document.getElementById('toMemoriesBtn').style.display = 'inline-block';
+                    }
+                } else if(index + 2 === currentLoc) { 
+                    paper.classList.remove("flipped");
+                    paper.style.zIndex = papers.length - index;
+                    currentLoc--;
+                    
+                    document.getElementById('toMemoriesBtn').style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
